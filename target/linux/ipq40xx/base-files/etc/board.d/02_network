@@ -113,6 +113,12 @@ ipq40xx_setup_interfaces()
 	mikrotik,wap-r-ac)
 		ucidef_set_interface_lan "sw-eth1 sw-eth2"
 		;;
+	mikrotik,rb450gx4)
+		ucidef_set_bridge_device "br0"
+		ucidef_set_interface_lan "ether1 ether2 ether3 ether4"
+		ucidef_set_interface_wan "ether5"
+		;;
+
 	netgear,lbr20)
 		ucidef_set_interface_lan "lan1 lan2"
 		ucidef_set_interface "wan" device "/dev/cdc-wdm0" protocol "qmi"
@@ -223,7 +229,8 @@ ipq40xx_setup_macs()
 	mikrotik,cap-ac|\
 	mikrotik,hap-ac2|\
 	mikrotik,hap-ac3|\
-	mikrotik,hap-ac3-lte6-kit)
+	mikrotik,hap-ac3-lte6-kit|\
+  mikrotik,rb450gx4)
 		wan_mac=$(cat /sys/firmware/mikrotik/hard_config/mac_base)
 		lan_mac=$(macaddr_add $wan_mac 1)
 		label_mac="$wan_mac"

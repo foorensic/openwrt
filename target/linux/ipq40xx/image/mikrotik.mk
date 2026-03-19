@@ -1,3 +1,5 @@
+DEVICE_VARS += UBIFS_LEB UBIFS_KERNEL_MAX_LEB_COUNT KERNEL_UBIFS_OPTS
+
 define Device/mikrotik_nor
 	DEVICE_VENDOR := MikroTik
 	BLOCKSIZE := 64k
@@ -22,6 +24,15 @@ define Device/mikrotik_nand
 		ubinize-kernel
 	IMAGES := sysupgrade.bin
 	IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  # ubifs logical eraseblock size depends on device blocksize
+	UBIFS_LEB = $$(shell echo "$$$$(( $$(BLOCKSIZE:k=) / 32 * 31 ))KiB")
+  # max-leb-cnt=max vol size (10MiB kernel partition)/LEB, use BLOCKSIZE
+	UBIFS_KERNEL_MAX_LEB_COUNT = $$(shell echo \
+		$$$$(( 10 * 2**10 / $$(BLOCKSIZE:k=) )))
+	KERNEL_UBIFS_OPTS = --min-io-size=$$(PAGESIZE) \
+			    --leb-size=$$(UBIFS_LEB) \
+			    --max-leb-cnt=$$(UBIFS_KERNEL_MAX_LEB_COUNT) \
+			    --compr=none
 endef
 
 define Device/mikrotik_cap-ac
@@ -102,3 +113,30 @@ define Device/mikrotik_wap-ac-lte
 	DEVICE_ALT0_MODEL := wAP ac LTE6
 endef
 TARGET_DEVICES += mikrotik_wap-ac-lte
+
+define Device/mikrotik_rb450gx4
+	$(call Device/mikrotik_nand)
+	DEVICE_MODEL := RouterBOARD RB450Gx4
+	SOC := qcom-ipq4019
+	DEVICE_DTS := qcom-ipq4019-rb450gx4
+	DEVICE_PACKAGES := -kmod-ath10k-ct -ath10k-firmware-qca4019-ct \
+		-wpad-basic-wolfssl
+endef
+
+define Device/mikrotik_rb450gx4-128k
+	$(call Device/mikrotik_rb450gx4)
+	DEVICE_VARIANT := 128k blocksize NAND
+	BLOCKSIZE := 128k
+	PAGESIZE := 2048
+	SUPPORTED_DEVICES += mikrotik,rb450gx4
+endef
+TARGET_DEVICES += mikrotik_rb450gx4-128k
+
+define Device/mikrotik_rb450gx4-256k
+	$(call Device/mikrotik_rb450gx4)
+	DEVICE_VARIANT := 256k blocksize NAND
+	BLOCKSIZE := 256k
+	PAGESIZE := 4096
+	SUPPORTED_DEVICES += mikrotik,rb450gx4
+endef
+TARGET_DEVICES += mikrotik_rb450gx4-256k
